@@ -1,9 +1,13 @@
 package com.example.emilyl.flixster;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.VideoView;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
@@ -20,6 +24,12 @@ public class MoviesActivity extends AppCompatActivity {
     ArrayList<Movie> movies;
     MoviesAdapter movieAdapter;
     ListView lvMovies;
+    //VideoView videoView;
+
+    String baseURL = "https://api.themoviedb.org/3";
+    String apiKey = "?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed";
+    AsyncHttpClient client = new AsyncHttpClient();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,12 +37,14 @@ public class MoviesActivity extends AppCompatActivity {
 
         movies = new ArrayList<>();
         lvMovies = (ListView) findViewById(R.id.lvMovies);
+        //videoView = (VideoView) findViewById(R.id.videoView);
         movieAdapter = new MoviesAdapter(this, movies);
         lvMovies.setAdapter(movieAdapter);
+        setUpListViewListener();
 
-        // 1. Get the actual movies
-        String url = "https://api.themoviedb.org/3/movie/now_playing?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed";
-        AsyncHttpClient client = new AsyncHttpClient();
+        // 1. Get the actual movie
+        String url = baseURL + "/movie/now_playing" + apiKey;
+        String videoURL = "";
         client.get(url, new JsonHttpResponseHandler(){
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
@@ -40,6 +52,8 @@ public class MoviesActivity extends AppCompatActivity {
                 try {
                     movieJsonResults = response.getJSONArray("results");
                     movies.addAll(Movie.fromJSONArray(movieJsonResults));
+
+                    String videoURL = getVideoURL(movies.get(0), baseURL);
                     movieAdapter.notifyDataSetChanged();
                     Log.d("DEBUG",movies.toString());
                 } catch (JSONException e) {
@@ -53,17 +67,33 @@ public class MoviesActivity extends AppCompatActivity {
                 super.onFailure(statusCode, headers, throwable, errorResponse);
             }
         });
+    }
 
-//        // 2. Get the ListView that we want to populate
-//        ListView lvMovies = (ListView) findViewById(R.id.lvMovies);
-//
-//        // 3. Create an ArrayAdapter
-//        MoviesAdapter adapter = new MoviesAdapter(this, movies);
-//
-//        // 4. Associate the ArrayAdapter with the ListView
-//        if (lvMovies != null)
-//            lvMovies.setAdapter(adapter);
+    private void setUpListViewListener() {
+        Log.d("clicked", "clicked");
+        lvMovies.setOnItemClickListener(
+                new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        Intent i = new Intent(MoviesActivity.this, DetailedActivity.class);
+                        Movie currentMovie = movies.get(position);
+                        i.putExtra("title", currentMovie.getTitle());
+                        i.putExtra("overview", currentMovie.getOverview());
+                        i.putExtra("posterPath",currentMovie.getPosterPath());
+                        i.putExtra("rating", currentMovie.getRating());
+                        startActivity(i);
+                    }
+                });
+    }
 
-
+    private String getVideoURL(Movie movie, String baseURL) {
+        String id = movie.getID();
+        client.get(baseURL + "/movie/" + id + "/videos" + apiKey, new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                super.onSuccess(statusCode, headers, response);
+            }
+        });
+        return "";
     }
 }

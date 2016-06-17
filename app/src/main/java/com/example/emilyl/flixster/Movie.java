@@ -1,5 +1,7 @@
 package com.example.emilyl.flixster;
 
+import android.util.Log;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,14 +12,19 @@ import java.util.ArrayList;
  * Created by emilyl on 6/15/16.
  */
 public class Movie {
-    public String posterPath;
-    public String title;
-    public String overview;
+    private String posterPath;
+    private String title;
+    private String overview;
+    private double rating;
+    private String id;
+
 
     public Movie(JSONObject jsonObject) throws JSONException {
         this.posterPath = jsonObject.getString("poster_path");
         this.title = jsonObject.getString("original_title");
         this.overview = jsonObject.getString("overview");
+        this.rating = jsonObject.getDouble("vote_average");
+        this.id = jsonObject.getString("id");
     }
 
     public static ArrayList<Movie> fromJSONArray(JSONArray jsonArray) {
@@ -34,11 +41,6 @@ public class Movie {
         return results;
     }
 
-//    @Override
-//    public String toString() {
-//        return title + " - " + rating;
-//    }
-
     public String getPosterPath() {
         return String.format("https://image.tmdb.org/t/p/w342/%s", posterPath);
     }
@@ -50,4 +52,8 @@ public class Movie {
     public String getOverview() {
         return overview;
     }
+
+    public double getRating() { return rating;}
+
+    public String getID() { return id; }
 }
